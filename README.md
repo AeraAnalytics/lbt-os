@@ -113,7 +113,7 @@
 ### 1. Clone
 
 ```bash
-git clone https://github.com/jhamm2315/lbt-os.git
+git clone https://github.com/AeraAnalytics/lbt-os.git
 cd lbt-os
 ```
 
