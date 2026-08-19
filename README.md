@@ -4,62 +4,17 @@
 
 ---
 
-## Demo
+## Browser Dashboard
 
-<!-- 
-  VIDEO OPTION 1 — Loom or YouTube (recommended)
-  Record a 60-90 second walkthrough, upload to Loom/YouTube, then replace the link below.
-  GitHub will render this as a clickable thumbnail if you use the img+link pattern.
+![LBT OS business audit dashboard](docs/screenshots/business-audit-dashboard.jpg)
 
-  Screenshot to take: your dashboard with data visible, then record yourself navigating
-  through Dashboard → Revenue Intelligence → AI Insights → Billing
--->
+This view shows how the product carries connected business data through to a usable decision layer:
 
-[![LBT OS Demo](docs/screenshots/demo-thumbnail.png)](https://youtu.be/YOUR_VIDEO_ID)
-
-<!-- 
-  VIDEO OPTION 2 — GitHub native video (MP4)
-  GitHub now supports embedding MP4s directly in READMEs.
-  Just drag-and-drop your .mp4 into the README editor on github.com
-  and GitHub will host it and insert the embed tag automatically.
-  No external hosting needed for files under 100MB.
--->
-
----
-
-## Screenshots
-
-### Dashboard
-<!-- Screenshot: /app with revenue chart, stat cards, and pipeline visible -->
-![Dashboard](docs/screenshots/dashboard.png)
-
-### Revenue Intelligence
-<!-- Screenshot: /app/revenue-intelligence showing LTV chart, win/loss rates, stage velocity -->
-![Revenue Intelligence](docs/screenshots/revenue-intelligence.png)
-
-### AI Insights (Audit Report)
-<!-- Screenshot: /app/insights after running an audit — show the full report expanded -->
-![AI Insights](docs/screenshots/ai-insights.png)
-
-### Lead Pipeline
-<!-- Screenshot: /app/leads with the kanban or table view populated -->
-![Leads](docs/screenshots/leads.png)
-
-### Strategy
-<!-- Screenshot: /app/strategy with at least one tab open (SWOT, Competitor, Market Position) -->
-![Strategy](docs/screenshots/strategy.png)
-
-### Billing & Plans
-<!-- Screenshot: /app/billing showing the three plan cards (Starter / Growth / Scale) -->
-![Billing](docs/screenshots/billing.png)
-
-### Connections (Integrations)
-<!-- Screenshot: /app/connections showing the available integration tiles -->
-![Connections](docs/screenshots/connections.png)
-
-### Messages (Signal Desk)
-<!-- Screenshot: /app/messages with the inbox open -->
-![Messages](docs/screenshots/messages.png)
+- accounting and CRM activity brought into one browser experience
+- provider fields mapped into a consistent business model
+- health scoring and plain-English performance summaries
+- risks, opportunities, and next actions surfaced for the operator
+- a clear handoff from the underlying pipeline to the person making the decision
 
 ---
 
@@ -232,29 +187,6 @@ export default function YourFeature() {
 **4. Wire up the route + sidebar**
 - Add to `frontend/src/App.jsx` under the `/app` route
 - Add a nav item in `frontend/src/components/layout/Sidebar.jsx`
-
----
-
-## How to Add Screenshots
-
-1. Create the folder: `docs/screenshots/`
-2. Take screenshots at **1440×900** or wider for best quality
-3. Name them to match the filenames in this README (e.g. `dashboard.png`)
-4. Drop them in `docs/screenshots/` and push — GitHub will render them automatically
-
-**Recommended tool:** Use macOS `Cmd+Shift+4` for screenshots, or [CleanShot X](https://cleanshot.com) for annotated shots.
-
-## How to Add Videos
-
-**Option A — MP4 (simplest, hosted by GitHub):**
-1. Open this README on github.com → click the pencil (edit) icon
-2. Drag and drop your `.mp4` file anywhere into the editor
-3. GitHub uploads it and inserts the embed tag — commit the change
-
-**Option B — Loom/YouTube thumbnail link:**
-1. Upload your video to Loom or YouTube
-2. Take a screenshot of the video as your thumbnail, save to `docs/screenshots/demo-thumbnail.png`
-3. Replace `YOUR_VIDEO_ID` in the Demo section above with your video ID
 
 ---
 
