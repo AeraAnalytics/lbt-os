@@ -1,7 +1,7 @@
 """
 Messages router — channels, messages, file storage, AI assistant, XLSX export.
 """
-from typing import Annotated, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import Response
@@ -11,6 +11,7 @@ from ..database import get_db
 from ..limiter import limiter
 from ..models.messages import AskInChannelBody, ChannelCreate, MessageCreate, ReactBody
 from ..services.messaging import (
+    MAX_FILE_BYTES,
     ask_ai_in_channel,
     create_channel,
     export_channel_xlsx,
@@ -18,11 +19,10 @@ from ..services.messaging import (
     get_messages,
     list_business_bots,
     list_channels,
-    send_message,
     send_bot_responses_for_mentions,
+    send_message,
     toggle_reaction,
     upload_file,
-    MAX_FILE_BYTES,
 )
 
 router = APIRouter(prefix="/messages", tags=["messages"])
@@ -68,7 +68,7 @@ def messages_list(
     channel_id: str,
     auth: Annotated[AuthContext, Depends(get_auth)],
     limit: int = Query(50, ge=1, le=100),
-    before_id: Optional[str] = Query(None),
+    before_id: str | None = Query(None),
 ):
     db = get_db()
     return get_messages(db, auth.org_id, channel_id, limit=limit, before_id=before_id)

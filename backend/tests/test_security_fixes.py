@@ -36,6 +36,22 @@ class SuccessInsertDb(DuplicateInsertDb):
         return {"status": "ok"}
 
 
+def _iter_full_routes(app):
+    """Yield (full_path, route) pairs, expanding lazy included routers.
+
+    FastAPI>=0.141 registers include_router() output as lazy placeholders;
+    the inner routes live on ``original_router`` and the include-time prefix
+    on ``include_context``.
+    """
+    for route in app.routes:
+        if hasattr(route, "original_router"):
+            prefix = getattr(route.include_context, "prefix", "") or ""
+            for inner in route.original_router.routes:
+                yield prefix + (getattr(inner, "path", "") or ""), inner
+        else:
+            yield getattr(route, "path", "") or "", route
+
+
 class SecurityFixTests(unittest.IsolatedAsyncioTestCase):
     async def test_csv_upload_size_is_bounded(self):
         oversized = FakeUploadFile(b"a" * (manual_import.MAX_CSV_FILE_BYTES + 1))
@@ -168,7 +184,11 @@ class SecurityFixTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("CSV", response.json()["detail"])
 
     def test_audit_route_endpoint_is_rate_limited(self):
-        route = next(route for route in app.routes if getattr(route, "path", None) == "/api/v1/audit/run")
+        route = next(
+            r
+            for _path, r in _iter_full_routes(app)
+            if _path == "/api/v1/audit/run"
+        )
         self.assertTrue(hasattr(route.endpoint, "__wrapped__"))
 
 

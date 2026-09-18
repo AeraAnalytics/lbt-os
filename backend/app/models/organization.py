@@ -1,28 +1,28 @@
 from datetime import datetime
-from typing import Optional
+
 from pydantic import BaseModel
 
 
 class OrgCreate(BaseModel):
     name: str
-    industry: Optional[str] = None
+    industry: str | None = None
     city: str = "Denver"
     state: str = "CO"
 
 
 class OrgUpdate(BaseModel):
-    name: Optional[str] = None
-    industry: Optional[str] = None
-    city: Optional[str] = None
-    state: Optional[str] = None
-    onboarding_complete: Optional[bool] = None
+    name: str | None = None
+    industry: str | None = None
+    city: str | None = None
+    state: str | None = None
+    onboarding_complete: bool | None = None
 
 
 class OrgOut(BaseModel):
     id: str
     clerk_org_id: str
     name: str
-    industry: Optional[str]
+    industry: str | None
     plan: str
     subscription_status: str
     city: str
@@ -33,7 +33,7 @@ class OrgOut(BaseModel):
 
 class DemoBootstrapRequest(BaseModel):
     industry: str
-    name: Optional[str] = None
+    name: str | None = None
     city: str = "Denver"
     state: str = "CO"
     seed: int = 42
@@ -41,5 +41,5 @@ class DemoBootstrapRequest(BaseModel):
 
 
 class DemoReseedRequest(BaseModel):
-    industry: Optional[str] = None
+    industry: str | None = None
     seed: int = 42

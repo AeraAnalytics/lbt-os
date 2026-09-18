@@ -8,17 +8,28 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.trustedhost import TrustedHostMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .config import settings
 from .limiter import limiter
 from .logging_config import configure_logging, request_id_var
 from .routers import (
-    admin, audit, customers, expenses, integrations, leads,
-    messages, metrics, organizations, revenue_intelligence,
-    sales, strategy, stripe_webhooks, visitor_events,
+    admin,
+    audit,
+    customers,
+    expenses,
+    integrations,
+    leads,
+    messages,
+    metrics,
+    organizations,
+    revenue_intelligence,
+    sales,
+    strategy,
+    stripe_webhooks,
+    visitor_events,
 )
 from .services.scheduler import start_scheduler, stop_scheduler
 

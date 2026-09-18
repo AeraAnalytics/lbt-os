@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs so stacked pushes don't burn minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        # Ruff is pinned so the lint bar can't drift under future PRs.
+        run: pip install -r requirements.txt pytest ruff==0.16.8
+      - name: Lint
+        run: ruff check app tests
+      - name: Test
+        run: pytest -q
+        env:
+          # Tests are mock-based; dummy values keep config validation happy.
+          SUPABASE_URL: https://example.supabase.co
+          SUPABASE_ANON_KEY: dummy-anon-key
+          SUPABASE_SERVICE_KEY: dummy-service-key
+          CLERK_SECRET_KEY: dummy-clerk-secret
+          CLERK_PUBLISHABLE_KEY: dummy-clerk-publishable
+          CLERK_WEBHOOK_SECRET: dummy-clerk-webhook
+          STRIPE_SECRET_KEY: sk_test_dummy
+          STRIPE_WEBHOOK_SECRET: whsec_dummy
+          STRIPE_PRICE_BASIC: price_dummy_basic
+          STRIPE_PRICE_PRO: price_dummy_pro
+          STRIPE_PRICE_PREMIUM: price_dummy_premium
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Build
+        run: npm run build
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

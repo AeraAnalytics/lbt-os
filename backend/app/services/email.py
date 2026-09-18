@@ -288,7 +288,7 @@ def send_weekly_brief(
     Called by the recurring scheduler — not triggered by user actions.
     """
     r = metrics.get("revenue", {})
-    l = metrics.get("leads", {})
+    leads_m = metrics.get("leads", {})
     c = metrics.get("customers", {})
     e = metrics.get("expenses", {})
 
@@ -306,13 +306,13 @@ def send_weekly_brief(
         for lbl, val, sub in [
             ("Revenue",          _d(r.get("total")),  f"{r.get('margin_pct', 0):.1f}% margin"),
             ("Gross Profit",     _d(r.get("profit")), f"{_d(e.get('total'))} expenses"),
-            ("Lead Conversion",  f"{l.get('conversion_rate_pct', 0):.1f}%", f"{l.get('won', 0)} won of {l.get('total', 0)}"),
+            ("Lead Conversion",  f"{leads_m.get('conversion_rate_pct', 0):.1f}%", f"{leads_m.get('won', 0)} won of {leads_m.get('total', 0)}"),
             ("Repeat Customers", f"{c.get('repeat_pct', 0):.1f}%", f"{c.get('repeat', 0)} returning"),
         ]
     )
 
     followup_alert = ""
-    missed = l.get("missed_follow_ups", 0)
+    missed = leads_m.get("missed_follow_ups", 0)
     if missed > 0:
         followup_alert = (
             f"<div style='background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;"
@@ -323,7 +323,7 @@ def send_weekly_brief(
         )
 
     revenue_str  = _d(r.get("total"))
-    conv_str     = f"{l.get('conversion_rate_pct', 0):.0f}"
+    conv_str     = f"{leads_m.get('conversion_rate_pct', 0):.0f}"
 
     body = f"""
       <h1 style="margin:0 0 4px;font-size:22px;font-weight:700;color:#0f172a;letter-spacing:-0.4px;">

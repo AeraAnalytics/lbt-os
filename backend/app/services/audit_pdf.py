@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Any
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 from reportlab.lib.pagesizes import LETTER
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
@@ -42,7 +42,6 @@ GREEN_50     = colors.HexColor("#f0fdf4")
 
 
 def _styles() -> dict[str, ParagraphStyle]:
-    base = dict(fontName="Helvetica", leading=14, textColor=BRAND_DARK)
     return {
         "kicker": ParagraphStyle("kicker", fontSize=8,  fontName="Helvetica-Bold",
                                  textColor=BRAND_BLUE, spaceAfter=4, leading=10,

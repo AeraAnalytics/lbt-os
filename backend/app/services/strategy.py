@@ -17,16 +17,15 @@ from typing import Any
 from urllib.parse import urlparse
 
 import httpx
+from supabase import Client
 
 from .ai_audit import _get_llm_client_for_plan
 from .metrics import (
-    INDUSTRY_BENCHMARKS,
     _DEFAULT_BENCHMARK,
+    INDUSTRY_BENCHMARKS,
     get_dashboard_metrics,
     get_segment_analysis,
 )
-from supabase import Client
-
 
 # ---------------------------------------------------------------------------
 # System prompts
@@ -145,7 +144,7 @@ async def _ddg_search(query: str, max_results: int = 8) -> list[dict]:
                     break
 
         return results[:max_results]
-    except Exception as e:
+    except Exception:
         return []
 
 
@@ -247,7 +246,7 @@ async def fetch_competitor_details(urls: list[str]) -> list[dict]:
     for url, text in zip(urls, texts):
         results.append({
             "url": url,
-            "content": text if isinstance(text, str) else f"(Error fetching page)",
+            "content": text if isinstance(text, str) else "(Error fetching page)",
         })
     return results
 
@@ -277,8 +276,7 @@ def _call_llm_sync(system_prompt: str, user_prompt: str, plan: str = "pro", json
 
     if content.startswith("```"):
         content = content.split("```")[1]
-        if content.startswith("json"):
-            content = content[4:]
+        content = content.removeprefix("json")
 
     if json_mode:
         try:
@@ -511,7 +509,7 @@ def get_proactive_briefing(
             "type": "urgent",
             "icon": "⚠",
             "title": f"{missed} follow-up{'s' if missed > 1 else ''} overdue right now",
-            "detail": f"These leads already expressed interest. Every day without contact reduces close probability by ~15-20%.",
+            "detail": "These leads already expressed interest. Every day without contact reduces close probability by ~15-20%.",
             "action": "Clear the follow-up queue today.",
         })
 
@@ -523,7 +521,7 @@ def get_proactive_briefing(
             "icon": "✦",
             "title": f"'{best['source'].replace('_', ' ').title()}' is converting at {best['conversion_rate_pct']:.1f}%",
             "detail": f"That's likely {best['conversion_rate_pct'] - metrics['leads']['conversion_rate_pct']:.1f} points above your blended average. Every additional lead here is worth ~${best['avg_deal_size']:,.0f}.",
-            "action": f"Route more volume through this channel before optimizing others.",
+            "action": "Route more volume through this channel before optimizing others.",
         })
 
     # Revenue trend signal

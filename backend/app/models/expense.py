@@ -1,7 +1,6 @@
 from datetime import date, datetime
-from typing import Optional
-from pydantic import BaseModel, field_validator
 
+from pydantic import BaseModel, field_validator
 
 EXPENSE_CATEGORIES = {
     "payroll", "materials", "marketing", "rent", "utilities",
@@ -13,10 +12,10 @@ class ExpenseCreate(BaseModel):
     category: str
     description: str
     amount: float
-    vendor: Optional[str] = None
-    receipt_url: Optional[str] = None
+    vendor: str | None = None
+    receipt_url: str | None = None
     is_recurring: bool = False
-    recurrence_period: Optional[str] = None
+    recurrence_period: str | None = None
     expense_date: date = date.today()
 
     @field_validator("category")
@@ -35,14 +34,14 @@ class ExpenseCreate(BaseModel):
 
 
 class ExpenseUpdate(BaseModel):
-    category: Optional[str] = None
-    description: Optional[str] = None
-    amount: Optional[float] = None
-    vendor: Optional[str] = None
-    receipt_url: Optional[str] = None
-    is_recurring: Optional[bool] = None
-    recurrence_period: Optional[str] = None
-    expense_date: Optional[date] = None
+    category: str | None = None
+    description: str | None = None
+    amount: float | None = None
+    vendor: str | None = None
+    receipt_url: str | None = None
+    is_recurring: bool | None = None
+    recurrence_period: str | None = None
+    expense_date: date | None = None
 
 
 class ExpenseOut(BaseModel):
@@ -51,10 +50,10 @@ class ExpenseOut(BaseModel):
     category: str
     description: str
     amount: float
-    vendor: Optional[str]
-    receipt_url: Optional[str]
+    vendor: str | None
+    receipt_url: str | None
     is_recurring: bool
-    recurrence_period: Optional[str]
+    recurrence_period: str | None
     expense_date: date
     created_at: datetime
     updated_at: datetime

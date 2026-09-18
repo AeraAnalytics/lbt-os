@@ -4,8 +4,17 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from ..auth import AuthContext, UserContext, get_auth, get_user
 from ..database import get_db
-from ..models.organization import DemoBootstrapRequest, DemoReseedRequest, OrgCreate, OrgOut, OrgUpdate
-from ..services.demo_data import bootstrap_demo_org, reset_org_operating_data, seed_org_data
+from ..models.organization import (
+    DemoBootstrapRequest,
+    DemoReseedRequest,
+    OrgCreate,
+    OrgUpdate,
+)
+from ..services.demo_data import (
+    bootstrap_demo_org,
+    reset_org_operating_data,
+    seed_org_data,
+)
 from ..services.templates import get_template, list_templates
 from ..services.workspace import get_workspace_status_payload
 

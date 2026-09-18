@@ -44,7 +44,7 @@ def _hash_ip(ip_address: str) -> str | None:
     if not ip_address:
         return None
     salt = settings.api_secret or settings.supabase_service_key
-    return hashlib.sha256(f"{salt}:{ip_address}".encode("utf-8")).hexdigest()
+    return hashlib.sha256(f"{salt}:{ip_address}".encode()).hexdigest()
 
 
 def _optional_user_id(request: Request) -> str | None:

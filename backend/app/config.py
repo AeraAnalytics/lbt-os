@@ -1,5 +1,5 @@
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     cors_origins: str = ""
     # Comma-separated hostnames accepted by TrustedHostMiddleware in production.
     trusted_hosts: str = ""
-    api_secret: Optional[str] = None          # not currently used; remove weak default
+    api_secret: str | None = None          # not currently used; remove weak default
     # Development/demo only: lets testers rerun free-tier audits without monthly gating.
     demo_allow_unlimited_audits: bool = False
     audit_rate_limit: str = "5/hour"
@@ -47,27 +47,27 @@ class Settings(BaseSettings):
     # Optional: Clerk JWT audience claim.  If set, token `aud` is verified against this value.
     # Find it in your Clerk dashboard → JWT Templates → your template → Audience field.
     # Leave empty to skip audience verification (safe for default Clerk JWT templates).
-    clerk_jwt_audience: Optional[str] = None
+    clerk_jwt_audience: str | None = None
     # In production we fail fast unless JWT audience verification is configured explicitly.
     clerk_require_audience_in_production: bool = True
 
     # Email (Resend) — optional; emails are silently skipped if not set
-    resend_api_key: Optional[str] = None
+    resend_api_key: str | None = None
     from_email: str = "LBT OS <noreply@lbt-os.com>"
 
     # SMS (Twilio) — optional; SMS is silently skipped if not set
-    twilio_account_sid: Optional[str] = None
-    twilio_auth_token: Optional[str] = None
-    twilio_from_number: Optional[str] = None  # e.g. +15555550100
+    twilio_account_sid: str | None = None
+    twilio_auth_token: str | None = None
+    twilio_from_number: str | None = None  # e.g. +15555550100
 
     # Integration / OAuth
-    integration_secret_key: Optional[str] = None
-    quickbooks_client_id: Optional[str] = None
-    quickbooks_client_secret: Optional[str] = None
-    quickbooks_redirect_uri: Optional[str] = None
-    hubspot_client_id: Optional[str] = None
-    hubspot_client_secret: Optional[str] = None
-    hubspot_redirect_uri: Optional[str] = None
+    integration_secret_key: str | None = None
+    quickbooks_client_id: str | None = None
+    quickbooks_client_secret: str | None = None
+    quickbooks_redirect_uri: str | None = None
+    hubspot_client_id: str | None = None
+    hubspot_client_secret: str | None = None
+    hubspot_redirect_uri: str | None = None
 
     @property
     def should_verify_clerk_audience(self) -> bool:

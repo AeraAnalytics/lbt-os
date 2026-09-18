@@ -1,7 +1,6 @@
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, field_validator
 
+from pydantic import BaseModel, field_validator
 
 LEAD_STATUSES = {"new", "contacted", "qualified", "proposal", "won", "lost"}
 LEAD_SOURCES  = {"google", "referral", "social", "yelp", "cold_call", "walk_in", "website", "other"}
@@ -9,15 +8,15 @@ LEAD_SOURCES  = {"google", "referral", "social", "yelp", "cold_call", "walk_in",
 
 class LeadCreate(BaseModel):
     name: str
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    source: Optional[str] = None
+    email: str | None = None
+    phone: str | None = None
+    source: str | None = None
     status: str = "new"
-    service_interest: Optional[str] = None
-    estimated_value: Optional[float] = None
-    notes: Optional[str] = None
-    assigned_to: Optional[str] = None
-    follow_up_at: Optional[datetime] = None
+    service_interest: str | None = None
+    estimated_value: float | None = None
+    notes: str | None = None
+    assigned_to: str | None = None
+    follow_up_at: datetime | None = None
 
     @field_validator("status")
     @classmethod
@@ -28,19 +27,19 @@ class LeadCreate(BaseModel):
 
 
 class LeadUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    source: Optional[str] = None
-    status: Optional[str] = None
-    service_interest: Optional[str] = None
-    estimated_value: Optional[float] = None
-    notes: Optional[str] = None
-    assigned_to: Optional[str] = None
-    follow_up_at: Optional[datetime] = None
-    contacted_at: Optional[datetime] = None
-    converted_at: Optional[datetime] = None
-    lost_reason: Optional[str] = None
+    name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    source: str | None = None
+    status: str | None = None
+    service_interest: str | None = None
+    estimated_value: float | None = None
+    notes: str | None = None
+    assigned_to: str | None = None
+    follow_up_at: datetime | None = None
+    contacted_at: datetime | None = None
+    converted_at: datetime | None = None
+    lost_reason: str | None = None
 
     @field_validator("status")
     @classmethod
@@ -54,17 +53,17 @@ class LeadOut(BaseModel):
     id: str
     org_id: str
     name: str
-    email: Optional[str]
-    phone: Optional[str]
-    source: Optional[str]
+    email: str | None
+    phone: str | None
+    source: str | None
     status: str
-    service_interest: Optional[str]
-    estimated_value: Optional[float]
-    notes: Optional[str]
-    assigned_to: Optional[str]
-    follow_up_at: Optional[datetime]
-    contacted_at: Optional[datetime]
-    converted_at: Optional[datetime]
-    lost_reason: Optional[str]
+    service_interest: str | None
+    estimated_value: float | None
+    notes: str | None
+    assigned_to: str | None
+    follow_up_at: datetime | None
+    contacted_at: datetime | None
+    converted_at: datetime | None
+    lost_reason: str | None
     created_at: datetime
     updated_at: datetime

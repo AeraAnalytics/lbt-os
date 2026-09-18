@@ -14,7 +14,6 @@ from typing import Any
 from fastapi import HTTPException
 from supabase import Client
 
-
 # ---------------------------------------------------------------------------
 # File type helpers
 # ---------------------------------------------------------------------------
@@ -559,7 +558,7 @@ def upload_file(
             file=file_bytes,
             file_options={"content-type": content_type, "upsert": "false"},
         )
-    except Exception as exc:
+    except Exception:
         raise HTTPException(500, "File storage failed. Check that the 'message-files' bucket exists in Supabase.")
 
     result = (
@@ -626,8 +625,8 @@ def ask_ai_in_channel(
     question: str,
     plan: str = "basic",
 ) -> dict:
-    from .metrics import get_dashboard_metrics, get_segment_analysis
     from .ai_audit import _get_llm_client_for_plan
+    from .metrics import get_dashboard_metrics, get_segment_analysis
 
     metrics  = get_dashboard_metrics(db, org_id, days=30)
     segments = get_segment_analysis(db, org_id, days=30)
@@ -734,8 +733,15 @@ Answer format:
 
 
 def _build_analytics_payload(db: Client, org_id: str, bot_key: str, question: str) -> dict[str, Any]:
-    from .metrics import get_dashboard_metrics, get_revenue_forecast, get_segment_analysis
-    from .revenue_intelligence import get_data_quality_scorecard, get_speed_to_lead, get_stage_aging, get_win_loss_cohort
+    from .metrics import (
+        get_revenue_forecast,
+        get_segment_analysis,
+    )
+    from .revenue_intelligence import (
+        get_data_quality_scorecard,
+        get_speed_to_lead,
+        get_stage_aging,
+    )
 
     charts: list[dict[str, Any]] = []
     notes: list[str] = []
@@ -1026,7 +1032,11 @@ def _money(value: Any) -> str:
 
 
 def _build_connected_data_context(db: Client, org_id: str, question: str) -> str:
-    from .metrics import get_dashboard_metrics, get_revenue_forecast, get_segment_analysis
+    from .metrics import (
+        get_dashboard_metrics,
+        get_revenue_forecast,
+        get_segment_analysis,
+    )
     from .revenue_intelligence import (
         get_data_quality_scorecard,
         get_expansion_signals,

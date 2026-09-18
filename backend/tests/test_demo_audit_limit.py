@@ -2,7 +2,6 @@ import unittest
 
 from app.config import Settings
 
-
 BASE_SETTINGS = {
     "supabase_url": "https://example.supabase.co",
     "supabase_service_key": "service-key",
