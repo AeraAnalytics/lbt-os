@@ -12,7 +12,6 @@ from urllib.parse import urlencode
 import httpx
 from cryptography.fernet import Fernet
 from fastapi import HTTPException
-
 from supabase import Client
 
 from ..config import settings

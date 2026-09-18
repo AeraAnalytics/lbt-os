@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# Cancel superseded runs so stacked pushes don't burn minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend:
     runs-on: ubuntu-latest
@@ -16,8 +21,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
       - name: Install
-        run: pip install -r requirements.txt pytest ruff
+        # Ruff is pinned so the lint bar can't drift under future PRs.
+        run: pip install -r requirements.txt pytest ruff==0.16.8
       - name: Lint
         run: ruff check app tests
       - name: Test
@@ -27,6 +34,14 @@ jobs:
           SUPABASE_URL: https://example.supabase.co
           SUPABASE_ANON_KEY: dummy-anon-key
           SUPABASE_SERVICE_KEY: dummy-service-key
+          CLERK_SECRET_KEY: dummy-clerk-secret
+          CLERK_PUBLISHABLE_KEY: dummy-clerk-publishable
+          CLERK_WEBHOOK_SECRET: dummy-clerk-webhook
+          STRIPE_SECRET_KEY: sk_test_dummy
+          STRIPE_WEBHOOK_SECRET: whsec_dummy
+          STRIPE_PRICE_BASIC: price_dummy_basic
+          STRIPE_PRICE_PRO: price_dummy_pro
+          STRIPE_PRICE_PREMIUM: price_dummy_premium
 
   frontend:
     runs-on: ubuntu-latest

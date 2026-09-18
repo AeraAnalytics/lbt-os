@@ -17,7 +17,6 @@ from typing import Any
 from urllib.parse import urlparse
 
 import httpx
-
 from supabase import Client
 
 from .ai_audit import _get_llm_client_for_plan

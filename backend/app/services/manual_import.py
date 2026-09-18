@@ -7,7 +7,6 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from fastapi import HTTPException
-
 from supabase import Client
 
 MAX_CSV_FILE_BYTES = 2 * 1024 * 1024

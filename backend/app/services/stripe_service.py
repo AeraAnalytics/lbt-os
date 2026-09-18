@@ -11,7 +11,6 @@ from __future__ import annotations
 import logging
 
 import stripe
-
 from supabase import Client
 
 from ..config import PLAN_PRICE_MAP, settings

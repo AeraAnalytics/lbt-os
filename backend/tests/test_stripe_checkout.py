@@ -23,14 +23,15 @@ class StripeCheckoutTests(unittest.TestCase):
         self.assertIn("Unknown plan", str(ctx.exception))
 
     def test_checkout_session_must_belong_to_org(self):
-        fake_session = {
+        # stripe-python 15.x returns attribute-style objects, not dicts.
+        fake_session = type("Session", (), {
             "id": "cs_test_123",
             "client_reference_id": "other_org",
             "metadata": {"lbt_org_id": "other_org", "plan": "pro"},
             "subscription": None,
             "status": "complete",
             "payment_status": "paid",
-        }
+        })()
 
         with patch.object(stripe_service.stripe.checkout.Session, "retrieve", return_value=fake_session):
             with self.assertRaises(ValueError) as ctx:
@@ -44,14 +45,14 @@ class StripeCheckoutTests(unittest.TestCase):
             "status": "active",
             "metadata": {"lbt_org_id": "org_123", "plan": "pro"},
         })()
-        fake_session = {
+        fake_session = type("Session", (), {
             "id": "cs_test_123",
             "client_reference_id": "org_123",
             "metadata": {"lbt_org_id": "org_123", "plan": "pro"},
             "subscription": fake_subscription,
             "status": "complete",
             "payment_status": "paid",
-        }
+        })()
 
         with patch.object(stripe_service.stripe.checkout.Session, "retrieve", return_value=fake_session), \
              patch.object(stripe_service, "sync_subscription") as sync:

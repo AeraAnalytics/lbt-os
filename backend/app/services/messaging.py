@@ -12,7 +12,6 @@ from difflib import SequenceMatcher
 from typing import Any
 
 from fastapi import HTTPException
-
 from supabase import Client
 
 # ---------------------------------------------------------------------------

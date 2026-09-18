@@ -21,9 +21,8 @@ from typing import Any
 
 from openai import OpenAI
 from postgrest.exceptions import APIError
-from tenacity import retry, stop_after_attempt, wait_exponential
-
 from supabase import Client
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from ..config import settings
 from .metrics import (
