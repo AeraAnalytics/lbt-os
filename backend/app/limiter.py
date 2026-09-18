@@ -79,9 +79,13 @@ class _SlidingWindowLimiter:
                 return False
             hits.append(now)
             if len(self._hits) > 20000:
-                # Opportunistic prune of idle keys so the map cannot grow forever.
-                for stale in [k for k, v in self._hits.items() if not v]:
-                    del self._hits[stale]
+                # Opportunistic sweep so the map cannot grow forever: evict
+                # expired timestamps, then drop keys with nothing left.
+                for key, dq in list(self._hits.items()):
+                    while dq and dq[0] <= cutoff:
+                        dq.popleft()
+                    if not dq:
+                        del self._hits[key]
             return True
 
     def reset(self) -> None:

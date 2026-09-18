@@ -8,6 +8,7 @@ Handles:
 """
 from __future__ import annotations
 
+import datetime
 import logging
 
 import stripe
@@ -173,11 +174,37 @@ def claim_webhook_event(db: Client, event_id: str) -> str:
         return "duplicate"
     if status == "processing" and _claim_age_seconds(row.get("processed_at")) < _WEBHOOK_CLAIM_TAKEOVER_SECONDS:
         return "inflight"
-    # Stale "processing" claim or a "failed" claim — take it over and reprocess.
-    db.table("stripe_events").update({"status": "processing"}).eq(
-        "stripe_event_id", event_id
-    ).execute()
-    return "new"
+
+    # Take over a stale "processing" claim or a "failed" claim. This MUST be a
+    # single conditional update (not check-then-act): concurrent workers racing
+    # on the same stale row must not both win. Zero affected rows means someone
+    # else took it or finished it first -> treat as inflight, do not process.
+    now_iso = _utcnow_iso()
+    if status == "failed":
+        # A failed claim is by definition not in flight — the worker died.
+        # Take over immediately regardless of claim age.
+        taken = (
+            db.table("stripe_events")
+            .update({"status": "processing", "processed_at": now_iso})
+            .eq("stripe_event_id", event_id)
+            .eq("status", "failed")
+            .execute()
+        )
+    else:
+        cutoff_iso = (
+            datetime.datetime.now(datetime.timezone.utc)
+            - datetime.timedelta(seconds=_WEBHOOK_CLAIM_TAKEOVER_SECONDS)
+        ).isoformat()
+        taken = (
+            db.table("stripe_events")
+            .update({"status": "processing", "processed_at": now_iso})
+            .eq("stripe_event_id", event_id)
+            .eq("status", "processing")
+            .lt("processed_at", cutoff_iso)
+            .execute()
+        )
+    taken_rows = taken.data if taken and taken.data else None
+    return "new" if taken_rows else "inflight"
 
 
 def mark_webhook_processed(db: Client, event_id: str) -> None:
@@ -194,10 +221,13 @@ def mark_webhook_failed(db: Client, event_id: str) -> None:
     ).execute()
 
 
+def _utcnow_iso() -> str:
+    """Current UTC time as an ISO-8601 string (for claim timestamps)."""
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
 def _claim_age_seconds(claimed_at) -> float:
     """Age of a claim timestamp in seconds; unparseable -> treated as stale."""
-    import datetime
-
     if not claimed_at:
         return float("inf")
     try:

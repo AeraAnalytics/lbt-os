@@ -125,6 +125,8 @@ async def stripe_webhook(request: Request):
     # TW-079: status-gated idempotency. Only events marked "processed" are
     # skipped — a failed dispatch is marked "failed" so Stripe's retry
     # reprocesses it instead of being swallowed as a duplicate.
+    # Note: event_id == "unknown" skips idempotency entirely (pre-existing
+    # behavior). Accepted: a valid Stripe-signed event always carries an id.
     if event_id != "unknown":
         claim = claim_webhook_event(db, event_id)
         if claim == "duplicate":
