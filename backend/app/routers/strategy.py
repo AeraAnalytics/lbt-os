@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from ..auth import AuthContext, get_auth, require_plan
 from ..database import get_db
-from ..limiter import limiter
+from ..limiter import enforce_user_limit, limiter
 from ..services.strategy import (
     get_proactive_briefing,
     run_competitive_analysis,
@@ -80,6 +80,7 @@ def strategy_ask(
     request: Request,                           # required by slowapi
     body: StrategyAskBody,
     auth: Annotated[AuthContext, Depends(require_plan("pro"))],  # fix #3: Pro+ only
+    _user_limit: Annotated[None, Depends(enforce_user_limit("20/hour"))],  # TW-078: per-verified-user
 ):
     """
     AI strategist — answer a strategic question using the org's live business data.
@@ -116,6 +117,7 @@ async def strategy_search_competitors(
     request: Request,                           # required by slowapi
     body: CompetitorSearchBody,
     auth: Annotated[AuthContext, Depends(require_plan("pro"))],  # fix #3: Pro+ only
+    _user_limit: Annotated[None, Depends(enforce_user_limit("10/hour"))],  # TW-078: per-verified-user
 ):
     """
     Search the web for competitors in the org's industry and location.
@@ -160,6 +162,7 @@ async def strategy_analyze_competitors(
     request: Request,                           # required by slowapi
     body: CompetitorAnalysisBody,
     auth: Annotated[AuthContext, Depends(require_plan("pro"))],  # fix #3: Pro+ only
+    _user_limit: Annotated[None, Depends(enforce_user_limit("10/hour"))],  # TW-078: per-verified-user
 ):
     """
     Fetch competitor pages and run AI comparative analysis.

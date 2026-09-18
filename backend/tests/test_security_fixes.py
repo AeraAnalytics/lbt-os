@@ -36,6 +36,67 @@ class SuccessInsertDb(DuplicateInsertDb):
         return {"status": "ok"}
 
 
+class _FakeResult:
+    def __init__(self, data):
+        self.data = data
+
+
+class _StatusDb:
+    """In-memory fake of the stripe_events table for TW-079 claim tests.
+
+    rows: {event_id: (status, processed_at_iso)}.
+    """
+
+    def __init__(self, rows=None):
+        self.rows = dict(rows or {})
+
+    def table(self, _name):
+        return self
+
+    def insert(self, payload):
+        self._op = ("insert", payload)
+        return self
+
+    def select(self, _cols):
+        self._op = ("select", None)
+        return self
+
+    def update(self, payload):
+        self._op = ("update", payload)
+        return self
+
+    def eq(self, _col, value):
+        self._key = value
+        return self
+
+    def maybe_single(self):
+        return self
+
+    def execute(self):
+        op, payload = self._op
+        if op == "insert":
+            event_id = payload["stripe_event_id"]
+            if event_id in self.rows:
+                raise Exception("duplicate key value violates unique constraint")
+            self.rows[event_id] = (
+                payload.get("status", "processed"),
+                "2026-01-01T00:00:00+00:00",
+            )
+            return _FakeResult(None)
+        if op == "select":
+            row = self.rows.get(self._key)
+            data = (
+                {"status": row[0], "processed_at": row[1]} if row else None
+            )
+            return _FakeResult(data)
+        if op == "update":
+            if self._key in self.rows:
+                old_status, old_ts = self.rows[self._key]
+                self.rows[self._key] = (payload.get("status", old_status), old_ts)
+            return _FakeResult(None)
+        raise AssertionError(f"unexpected op {op}")
+
+
 def _iter_full_routes(app):
     """Yield (full_path, route) pairs, expanding lazy included routers.
 
@@ -69,8 +130,10 @@ class SecurityFixTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(rows[0]["phone"], "+13035550101")
 
     def test_stripe_webhook_duplicate_events_are_ignored(self):
-        self.assertFalse(stripe_service.record_webhook_event(DuplicateInsertDb(), "evt_123"))
-        self.assertTrue(stripe_service.record_webhook_event(SuccessInsertDb(), "evt_123"))
+        # TW-079: status-gated claims — only "processed" events are duplicates.
+        self.assertEqual(stripe_service.claim_webhook_event(SuccessInsertDb(), "evt_123"), "new")
+        db = _StatusDb({"evt_123": ("processed", "2026-01-01T00:00:00+00:00")})
+        self.assertEqual(stripe_service.claim_webhook_event(db, "evt_123"), "duplicate")
 
     def test_production_requires_clerk_audience_by_default(self):
         with self.assertRaises(ValueError):

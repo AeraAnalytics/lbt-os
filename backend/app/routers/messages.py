@@ -8,7 +8,7 @@ from fastapi.responses import Response
 
 from ..auth import AuthContext, get_auth
 from ..database import get_db
-from ..limiter import limiter
+from ..limiter import enforce_user_limit, limiter
 from ..models.messages import AskInChannelBody, ChannelCreate, MessageCreate, ReactBody
 from ..services.messaging import (
     MAX_FILE_BYTES,
@@ -151,6 +151,7 @@ def messages_ask_ai(
     channel_id: str,
     body: AskInChannelBody,
     auth: Annotated[AuthContext, Depends(get_auth)],
+    _user_limit: Annotated[None, Depends(enforce_user_limit("20/hour"))],  # TW-078: per-verified-user
 ):
     db = get_db()
     # Save the user's question first so it appears in the thread

@@ -126,19 +126,88 @@ def handle_webhook(payload: bytes, sig_header: str) -> dict:
     return stripe.Webhook.construct_event(payload, sig_header, settings.stripe_webhook_secret)
 
 
-def record_webhook_event(db: Client, event_id: str) -> bool:
+# How long a "processing" claim is honored before another worker may take it
+# over. Stripe retries sequentially with backoff, so a recent claim means a
+# delivery is still in flight somewhere; an old one means it died.
+_WEBHOOK_CLAIM_TAKEOVER_SECONDS = 600
+
+
+def claim_webhook_event(db: Client, event_id: str) -> str:
     """
-    Persist the Stripe event ID exactly once.
-    Returns False if the event was already recorded (duplicate).
+    Claim a Stripe event for processing (TW-079 status-gated idempotency).
+
+    Returns:
+        "new"       — this caller owns the event and must process it.
+        "duplicate" — already processed; skip.
+        "inflight"  — claimed very recently by another in-flight delivery; skip.
+
+    Only events marked "processed" are skipped. A failed dispatch is marked
+    "failed" (see mark_webhook_failed), so Stripe's retry reprocesses it
+    instead of being swallowed as a duplicate.
     """
     try:
-        db.table("stripe_events").insert({"stripe_event_id": event_id}).execute()
-        return True
+        db.table("stripe_events").insert(
+            {"stripe_event_id": event_id, "status": "processing"}
+        ).execute()
+        return "new"
     except Exception as exc:
         error_text = str(exc).lower()
-        if "duplicate key" in error_text or "unique constraint" in error_text:
-            return False
-        raise
+        if "duplicate key" not in error_text and "unique constraint" not in error_text:
+            raise
+
+    result = (
+        db.table("stripe_events")
+        .select("status, processed_at")
+        .eq("stripe_event_id", event_id)
+        .maybe_single()
+        .execute()
+    )
+    row = result.data if result and result.data else None
+    if not row:
+        # Lost the insert race but no row is visible yet — process; the
+        # mark_webhook_processed update below is idempotent.
+        return "new"
+
+    status = (row.get("status") or "processed").lower()  # legacy rows pre-status column
+    if status == "processed":
+        return "duplicate"
+    if status == "processing" and _claim_age_seconds(row.get("processed_at")) < _WEBHOOK_CLAIM_TAKEOVER_SECONDS:
+        return "inflight"
+    # Stale "processing" claim or a "failed" claim — take it over and reprocess.
+    db.table("stripe_events").update({"status": "processing"}).eq(
+        "stripe_event_id", event_id
+    ).execute()
+    return "new"
+
+
+def mark_webhook_processed(db: Client, event_id: str) -> None:
+    """Mark a Stripe event fully processed — future deliveries are duplicates."""
+    db.table("stripe_events").update({"status": "processed"}).eq(
+        "stripe_event_id", event_id
+    ).execute()
+
+
+def mark_webhook_failed(db: Client, event_id: str) -> None:
+    """Mark a Stripe event failed so Stripe's retry reprocesses it (TW-079)."""
+    db.table("stripe_events").update({"status": "failed"}).eq(
+        "stripe_event_id", event_id
+    ).execute()
+
+
+def _claim_age_seconds(claimed_at) -> float:
+    """Age of a claim timestamp in seconds; unparseable -> treated as stale."""
+    import datetime
+
+    if not claimed_at:
+        return float("inf")
+    try:
+        if isinstance(claimed_at, str):
+            claimed_at = datetime.datetime.fromisoformat(claimed_at.replace("Z", "+00:00"))
+        if claimed_at.tzinfo is None:
+            claimed_at = claimed_at.replace(tzinfo=datetime.timezone.utc)
+        return (datetime.datetime.now(datetime.timezone.utc) - claimed_at).total_seconds()
+    except Exception:
+        return float("inf")
 
 
 def sync_subscription(db: Client, subscription: stripe.Subscription) -> None:
