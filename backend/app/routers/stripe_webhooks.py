@@ -21,10 +21,12 @@ from ..auth import AuthContext, get_auth, get_clerk_user_email
 from ..config import settings
 from ..database import get_db
 from ..services.stripe_service import (
+    claim_webhook_event,
     create_checkout_session,
     create_portal_session,
     handle_webhook,
-    record_webhook_event,
+    mark_webhook_failed,
+    mark_webhook_processed,
     sync_subscription,
     verify_checkout_session,
 )
@@ -120,14 +122,35 @@ async def stripe_webhook(request: Request):
 
     db = get_db()
 
-    if event_id != "unknown" and not record_webhook_event(db, event_id):
-        log.info("webhook_duplicate", extra={"event_id": event_id, "event_type": event_type})
-        return JSONResponse({"received": True, "duplicate": True})
+    # TW-079: status-gated idempotency. Only events marked "processed" are
+    # skipped — a failed dispatch is marked "failed" so Stripe's retry
+    # reprocesses it instead of being swallowed as a duplicate.
+    # Note: event_id == "unknown" skips idempotency entirely (pre-existing
+    # behavior). Accepted: a valid Stripe-signed event always carries an id.
+    if event_id != "unknown":
+        claim = claim_webhook_event(db, event_id)
+        if claim == "duplicate":
+            log.info("webhook_duplicate", extra={"event_id": event_id, "event_type": event_type})
+            return JSONResponse({"received": True, "duplicate": True})
+        if claim == "inflight":
+            # TW-087: NEVER return 200 here. "inflight" can mean the claiming
+            # worker crashed (SIGKILL/OOM/deploy) between claim and mark — a
+            # 200 tells Stripe the event was delivered and it never retries,
+            # losing the event permanently. 503 is retryable: if the event is
+            # genuinely in flight elsewhere, the retry is a harmless duplicate
+            # (all _dispatch handlers are idempotent); if the worker died,
+            # the retry takes over the stale claim.
+            log.info("webhook_inflight_retryable", extra={"event_id": event_id, "event_type": event_type})
+            raise HTTPException(status_code=503, detail="Webhook event is being processed; retry later.")
 
     try:
         _dispatch(db, event_type, event)
+        if event_id != "unknown":
+            mark_webhook_processed(db, event_id)
         log.info("webhook_processed", extra={"event_id": event_id, "event_type": event_type})
     except Exception:
+        if event_id != "unknown":
+            mark_webhook_failed(db, event_id)
         log.exception("webhook_processing_failed", extra={"event_id": event_id, "event_type": event_type})
         # Return 500 so Stripe retries
         raise HTTPException(status_code=500, detail="Webhook processing error.")

@@ -6,7 +6,7 @@ from fastapi.responses import Response
 from ..auth import AuthContext, get_auth, get_clerk_user_email, require_plan
 from ..config import settings
 from ..database import get_db
-from ..limiter import limiter
+from ..limiter import enforce_user_limit, limiter
 from ..services.ai_audit import (
     PLAN_AUDIT_LIMITS,
     count_audits_this_month,
@@ -36,6 +36,7 @@ def _audit_limit_detail(plan: str, cap: int) -> str:
 def trigger_audit(
     request: Request,
     auth: Annotated[AuthContext, Depends(get_auth)],
+    _user_limit: Annotated[None, Depends(enforce_user_limit(settings.audit_rate_limit))],  # TW-078: per-verified-user
     background_tasks: BackgroundTasks,
 ):
     """
