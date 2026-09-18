@@ -140,7 +140,10 @@ def claim_webhook_event(db: Client, event_id: str) -> str:
     Returns:
         "new"       — this caller owns the event and must process it.
         "duplicate" — already processed; skip.
-        "inflight"  — claimed very recently by another in-flight delivery; skip.
+        "inflight"  — claimed very recently by another in-flight delivery.
+                      The caller MUST answer with a retryable status (5xx),
+                      never 200 — a 200 tells Stripe the event was delivered
+                      and it will not retry a crashed worker's event (TW-087).
 
     Only events marked "processed" are skipped. A failed dispatch is marked
     "failed" (see mark_webhook_failed), so Stripe's retry reprocesses it
@@ -169,7 +172,8 @@ def claim_webhook_event(db: Client, event_id: str) -> str:
         # mark_webhook_processed update below is idempotent.
         return "new"
 
-    status = (row.get("status") or "processed").lower()  # legacy rows pre-status column
+    # NOT NULL column; the fallback is purely defensive.
+    status = (row.get("status") or "processed").lower()
     if status == "processed":
         return "duplicate"
     if status == "processing" and _claim_age_seconds(row.get("processed_at")) < _WEBHOOK_CLAIM_TAKEOVER_SECONDS:

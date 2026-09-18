@@ -233,6 +233,71 @@ class WebhookClaimTests(unittest.TestCase):
             stripe_service.claim_webhook_event(BoomDb(), "evt_5")
 
 
+class WebhookRouterTests(unittest.IsolatedAsyncioTestCase):
+    """TW-087: the router must answer 'inflight' with a retryable 5xx, never 200."""
+
+    async def test_inflight_returns_503_not_200(self):
+        import datetime
+        from unittest.mock import patch
+
+        from app.routers import stripe_webhooks
+
+        db = StatusDb()
+        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        # Simulate a crashed worker: fresh "processing" claim, never marked.
+        db.rows["evt_9"] = ("processing", now)
+
+        async def receive():
+            return {"type": "http.request", "body": b"{}", "more_body": False}
+
+        scope = {
+            "type": "http",
+            "headers": [(b"stripe-signature", b"sig")],
+            "client": ("1.2.3.4", 1234),
+        }
+        request = Request(scope, receive=receive)
+
+        fake_event = {"id": "evt_9", "type": "customer.subscription.deleted"}
+        with (
+            patch.object(stripe_webhooks, "handle_webhook", return_value=fake_event),
+            patch.object(stripe_webhooks, "get_db", return_value=db),
+        ):
+            with self.assertRaises(HTTPException) as ctx:
+                await stripe_webhooks.stripe_webhook(request)
+        self.assertEqual(ctx.exception.status_code, 503)
+
+    async def test_duplicate_still_returns_200(self):
+        import datetime
+        from unittest.mock import patch
+
+        from fastapi.responses import JSONResponse
+
+        from app.routers import stripe_webhooks
+
+        db = StatusDb()
+        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        db.rows["evt_10"] = ("processed", now)
+
+        async def receive():
+            return {"type": "http.request", "body": b"{}", "more_body": False}
+
+        scope = {
+            "type": "http",
+            "headers": [(b"stripe-signature", b"sig")],
+            "client": ("1.2.3.4", 1234),
+        }
+        request = Request(scope, receive=receive)
+
+        fake_event = {"id": "evt_10", "type": "customer.subscription.deleted"}
+        with (
+            patch.object(stripe_webhooks, "handle_webhook", return_value=fake_event),
+            patch.object(stripe_webhooks, "get_db", return_value=db),
+        ):
+            response = await stripe_webhooks.stripe_webhook(request)
+        self.assertIsInstance(response, JSONResponse)
+        self.assertEqual(response.status_code, 200)
+
+
 if __name__ == "__main__":
     unittest.main()
 

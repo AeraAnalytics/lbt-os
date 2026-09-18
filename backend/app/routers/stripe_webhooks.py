@@ -133,8 +133,15 @@ async def stripe_webhook(request: Request):
             log.info("webhook_duplicate", extra={"event_id": event_id, "event_type": event_type})
             return JSONResponse({"received": True, "duplicate": True})
         if claim == "inflight":
-            log.info("webhook_inflight", extra={"event_id": event_id, "event_type": event_type})
-            return JSONResponse({"received": True, "inflight": True})
+            # TW-087: NEVER return 200 here. "inflight" can mean the claiming
+            # worker crashed (SIGKILL/OOM/deploy) between claim and mark — a
+            # 200 tells Stripe the event was delivered and it never retries,
+            # losing the event permanently. 503 is retryable: if the event is
+            # genuinely in flight elsewhere, the retry is a harmless duplicate
+            # (all _dispatch handlers are idempotent); if the worker died,
+            # the retry takes over the stale claim.
+            log.info("webhook_inflight_retryable", extra={"event_id": event_id, "event_type": event_type})
+            raise HTTPException(status_code=503, detail="Webhook event is being processed; retry later.")
 
     try:
         _dispatch(db, event_type, event)
