@@ -21,11 +21,17 @@ from typing import Any
 
 from openai import OpenAI
 from postgrest.exceptions import APIError
-from supabase import Client
 from tenacity import retry, stop_after_attempt, wait_exponential
 
+from supabase import Client
+
 from ..config import settings
-from .metrics import INDUSTRY_BENCHMARKS, _DEFAULT_BENCHMARK, get_dashboard_metrics, get_segment_analysis
+from .metrics import (
+    _DEFAULT_BENCHMARK,
+    INDUSTRY_BENCHMARKS,
+    get_dashboard_metrics,
+    get_segment_analysis,
+)
 
 # ---------------------------------------------------------------------------
 # Per-plan LLM client cache
@@ -239,8 +245,7 @@ def _call_llm(prompt: str, plan: str) -> dict[str, Any]:
     # Ollama sometimes wraps JSON in markdown code fences — strip them
     if content.startswith("```"):
         content = content.split("```")[1]
-        if content.startswith("json"):
-            content = content[4:]
+        content = content.removeprefix("json")
 
     return json.loads(content)
 

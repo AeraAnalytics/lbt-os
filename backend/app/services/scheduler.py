@@ -46,11 +46,11 @@ def _send_sms(*, to: str, body: str) -> None:
 def _weekly_brief_sms(*, to: str, org_name: str, metrics: dict[str, Any]) -> None:
     """Compose and send the Monday morning brief as a short SMS."""
     r = metrics.get("revenue", {})
-    l = metrics.get("leads", {})
+    leads_m = metrics.get("leads", {})
     revenue    = f"${(r.get('total') or 0):,.0f}"
     margin     = f"{(r.get('margin_pct') or 0):.0f}%"
-    conversion = f"{(l.get('conversion_rate_pct') or 0):.0f}%"
-    missed     = l.get("missed_follow_ups", 0)
+    conversion = f"{(leads_m.get('conversion_rate_pct') or 0):.0f}%"
+    missed     = leads_m.get("missed_follow_ups", 0)
     dashboard  = f"{settings.frontend_url}/app"
 
     lines = [

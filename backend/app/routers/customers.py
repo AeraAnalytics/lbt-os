@@ -1,4 +1,4 @@
-from typing import Annotated, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/customers", tags=["customers"])
 @router.get("", response_model=list[CustomerOut])
 def list_customers(
     auth: Annotated[AuthContext, Depends(get_auth)],
-    tag: Optional[str] = Query(None),
+    tag: str | None = Query(None),
     limit: int = Query(50, le=200),
     offset: int = Query(0),
 ):

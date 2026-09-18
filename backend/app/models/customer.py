@@ -1,39 +1,39 @@
 from datetime import datetime
-from typing import Optional
+
 from pydantic import BaseModel
 
 
 class CustomerCreate(BaseModel):
     name: str
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    address: Optional[str] = None
+    email: str | None = None
+    phone: str | None = None
+    address: str | None = None
     tags: list[str] = []
-    notes: Optional[str] = None
-    lead_id: Optional[str] = None
+    notes: str | None = None
+    lead_id: str | None = None
 
 
 class CustomerUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    address: Optional[str] = None
-    tags: Optional[list[str]] = None
-    notes: Optional[str] = None
+    name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    address: str | None = None
+    tags: list[str] | None = None
+    notes: str | None = None
 
 
 class CustomerOut(BaseModel):
     id: str
     org_id: str
-    lead_id: Optional[str]
+    lead_id: str | None
     name: str
-    email: Optional[str]
-    phone: Optional[str]
-    address: Optional[str]
+    email: str | None
+    phone: str | None
+    address: str | None
     tags: list[str]
     lifetime_value: float
     total_orders: int
-    last_purchase_at: Optional[datetime]
-    notes: Optional[str]
+    last_purchase_at: datetime | None
+    notes: str | None
     created_at: datetime
     updated_at: datetime

@@ -1,10 +1,18 @@
 import csv
 import io
-from pathlib import PurePath
 from datetime import date
+from pathlib import PurePath
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    HTTPException,
+    Query,
+    UploadFile,
+)
 from fastapi.responses import RedirectResponse, StreamingResponse
 
 from ..auth import AuthContext, get_auth, get_clerk_user_email, require_plan
@@ -15,15 +23,17 @@ from ..models.integration import (
     IntegrationConnectionUpdate,
     IntegrationSyncRunOut,
 )
+from ..services.data_export import build_workspace_zip
+from ..services.email import send_sync_complete
 from ..services.integrations import (
     SUPPORTED_PROVIDERS,
+    create_connection,
     delete_connection,
     exchange_oauth_code,
-    get_integration_overview,
-    get_frontend_connection_callback,
-    get_oauth_authorization_url,
-    create_connection,
     get_connection,
+    get_frontend_connection_callback,
+    get_integration_overview,
+    get_oauth_authorization_url,
     list_connections,
     list_provider_definitions,
     list_sync_runs,
@@ -33,9 +43,7 @@ from ..services.integrations import (
     update_connection,
 )
 from ..services.manual_import import import_csv_rows, list_import_history
-from ..services.data_export import build_workspace_zip
 from ..services.templates import get_template
-from ..services.email import send_sync_complete
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
 ALLOWED_CSV_CONTENT_TYPES = {

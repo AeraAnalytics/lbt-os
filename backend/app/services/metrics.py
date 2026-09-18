@@ -10,7 +10,6 @@ from typing import Any
 
 from supabase import Client
 
-
 INDUSTRY_BENCHMARKS: dict[str, dict[str, float | str]] = {
     "hvac":            {"conversion": 28.0, "margin": 32.0, "repeat": 24.0, "note": "HVAC operators usually win by tightening follow-up speed and seasonal repeat work."},
     "plumbing":        {"conversion": 30.0, "margin": 34.0, "repeat": 26.0, "note": "Strong plumbing shops usually defend margin through pricing discipline and repeat service calls."},
@@ -50,9 +49,12 @@ def _label_change(current: float, previous: float, unit: str = "%") -> str:
 
 
 def _health_label(score: int) -> str:
-    if score >= 80: return "Strong"
-    if score >= 60: return "Stable"
-    if score >= 40: return "Needs Attention"
+    if score >= 80:
+        return "Strong"
+    if score >= 60:
+        return "Stable"
+    if score >= 40:
+        return "Needs Attention"
     return "At Risk"
 
 
@@ -91,11 +93,11 @@ def _window_metrics(db: Client, org_id: str, start_day: date, end_day: date) -> 
         cat = expense.get("category") or "uncategorized"
         expenses_by_category[cat] = expenses_by_category.get(cat, 0) + float(expense.get("amount") or 0)
 
-    won  = [l for l in leads if l.get("status") == "won"]
-    lost = [l for l in leads if l.get("status") == "lost"]
+    won  = [lead for lead in leads if lead.get("status") == "won"]
+    lost = [lead for lead in leads if lead.get("status") == "lost"]
     missed_follow_ups = [
-        l for l in leads
-        if l.get("follow_up_at") and not l.get("contacted_at") and l.get("status") not in ("won", "lost")
+        lead for lead in leads
+        if lead.get("follow_up_at") and not lead.get("contacted_at") and lead.get("status") not in ("won", "lost")
     ]
 
     total_revenue  = _sum(paid_sales, "amount")
@@ -151,21 +153,21 @@ def get_dashboard_metrics(db: Client, org_id: str, days: int = 30) -> dict[str, 
     leads = (db.table("leads").select("status, source, created_at, follow_up_at, contacted_at")
              .eq("org_id", org_id).gte("created_at", since).execute()).data or []
     total_leads  = len(leads)
-    won_leads    = [l for l in leads if l["status"] == "won"]
-    lost_leads   = [l for l in leads if l["status"] == "lost"]
+    won_leads    = [lead for lead in leads if lead["status"] == "won"]
+    lost_leads   = [lead for lead in leads if lead["status"] == "lost"]
     conversion_rate = (len(won_leads) / total_leads * 100) if total_leads else 0
     missed_follow_ups = [
-        l for l in leads
-        if l.get("follow_up_at") and not l.get("contacted_at") and l["status"] not in ("won", "lost")
+        lead for lead in leads
+        if lead.get("follow_up_at") and not lead.get("contacted_at") and lead["status"] not in ("won", "lost")
     ]
     avg_deal_size = (total_revenue / len(won_leads)) if won_leads else 0
 
     leads_by_source: dict[str, int] = {}
     won_by_source: dict[str, int] = {}
-    for l in leads:
-        src = l.get("source") or "unknown"
+    for lead in leads:
+        src = lead.get("source") or "unknown"
         leads_by_source[src] = leads_by_source.get(src, 0) + 1
-        if l["status"] == "won":
+        if lead["status"] == "won":
             won_by_source[src] = won_by_source.get(src, 0) + 1
 
     customers = (db.table("customers").select("id, total_orders, last_purchase_at, created_at")
@@ -241,9 +243,7 @@ def get_analyst_brief(
     previous_window = _window_metrics(db, org_id, previous_start, current_start)
 
     revenue_total  = metrics["revenue"]["total"]
-    profit_total   = metrics["revenue"]["profit"]
     margin_pct     = metrics["revenue"]["margin_pct"]
-    avg_deal_size  = metrics["revenue"]["avg_deal_size"]
     lead_total     = metrics["leads"]["total"]
     conversion_pct = metrics["leads"]["conversion_rate_pct"]
     missed_follow_ups = metrics["leads"]["missed_follow_ups"]
@@ -282,7 +282,7 @@ def get_analyst_brief(
     if repeat_pct < bm_repeat and metrics["customers"]["total"] >= 5:
         score -= 10
 
-    if expense_total > revenue_total and revenue_total > 0:
+    if expense_total > revenue_total > 0:
         score -= 10
 
     # Bonus points for overperforming benchmarks

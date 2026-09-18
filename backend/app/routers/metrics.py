@@ -6,9 +6,9 @@ from ..auth import AuthContext, get_auth
 from ..database import get_db
 from ..services.metrics import (
     get_dashboard_metrics,
+    get_revenue_forecast,
     get_revenue_trend,
     get_segment_analysis,
-    get_revenue_forecast,
 )
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])

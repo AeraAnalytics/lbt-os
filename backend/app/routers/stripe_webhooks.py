@@ -11,10 +11,11 @@ Webhook events handled:
   - checkout.session.completed
 """
 import logging
+from typing import Annotated
+
 import stripe
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
-from typing import Annotated
 
 from ..auth import AuthContext, get_auth, get_clerk_user_email
 from ..config import settings
@@ -91,7 +92,7 @@ def checkout_session_status(
         log.exception("checkout_session_verify_failed", extra={"org_id": auth.org_id, "session_id": session_id})
         message = getattr(exc, "user_message", None) or getattr(exc, "error", {}).get("message") or str(exc)
         raise HTTPException(status_code=502, detail=f"Stripe checkout verification failed: {message}")
-    except Exception as exc:
+    except Exception:
         log.exception("checkout_session_verify_unexpected", extra={"org_id": auth.org_id, "session_id": session_id})
         raise HTTPException(status_code=500, detail="Unexpected error verifying checkout session.")
 

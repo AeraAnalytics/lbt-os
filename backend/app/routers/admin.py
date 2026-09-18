@@ -4,12 +4,12 @@ Admin router — platform management endpoints.
 Access is restricted to Clerk user IDs listed in ADMIN_USER_IDS env var.
 All endpoints require a valid Clerk JWT plus admin authorization.
 """
-from typing import Annotated, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from ..auth import _verify_clerk_jwt, AuthContext
+from ..auth import _verify_clerk_jwt
 from ..config import settings
 from ..database import get_db
 
@@ -143,8 +143,8 @@ async def admin_integration_health(
 @router.get("/organizations")
 async def admin_list_organizations(
     admin: Annotated[dict, Depends(get_admin_auth)],
-    search: Optional[str] = Query(None),
-    plan: Optional[str] = Query(None),
+    search: str | None = Query(None),
+    plan: str | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ):

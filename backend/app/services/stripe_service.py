@@ -9,10 +9,12 @@ Handles:
 from __future__ import annotations
 
 import logging
+
 import stripe
+
 from supabase import Client
 
-from ..config import settings, PLAN_PRICE_MAP
+from ..config import PLAN_PRICE_MAP, settings
 
 log = logging.getLogger(__name__)
 

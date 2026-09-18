@@ -1,8 +1,7 @@
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
-
 
 SUPPORTED_PROVIDERS = {"quickbooks", "hubspot", "stripe"}
 SYNC_STATUSES = {"connected", "disconnected", "error"}
@@ -11,11 +10,11 @@ RUN_STATUSES = {"pending", "running", "success", "partial", "failed"}
 
 class IntegrationConnectionCreate(BaseModel):
     provider: str
-    label: Optional[str] = None
+    label: str | None = None
     credentials: dict[str, Any] = Field(default_factory=dict)
     config: dict[str, Any] = Field(default_factory=dict)
-    external_account_id: Optional[str] = None
-    external_account_name: Optional[str] = None
+    external_account_id: str | None = None
+    external_account_name: str | None = None
 
     @field_validator("provider")
     @classmethod
@@ -26,12 +25,12 @@ class IntegrationConnectionCreate(BaseModel):
 
 
 class IntegrationConnectionUpdate(BaseModel):
-    label: Optional[str] = None
-    credentials: Optional[dict[str, Any]] = None
-    config: Optional[dict[str, Any]] = None
-    status: Optional[str] = None
-    external_account_id: Optional[str] = None
-    external_account_name: Optional[str] = None
+    label: str | None = None
+    credentials: dict[str, Any] | None = None
+    config: dict[str, Any] | None = None
+    status: str | None = None
+    external_account_id: str | None = None
+    external_account_name: str | None = None
 
     @field_validator("status")
     @classmethod
@@ -45,14 +44,14 @@ class IntegrationConnectionOut(BaseModel):
     id: str
     org_id: str
     provider: str
-    label: Optional[str]
+    label: str | None
     status: str
     config: dict[str, Any]
-    external_account_id: Optional[str]
-    external_account_name: Optional[str]
-    last_synced_at: Optional[datetime]
-    last_sync_status: Optional[str]
-    last_sync_error: Optional[str]
+    external_account_id: str | None
+    external_account_name: str | None
+    last_synced_at: datetime | None
+    last_sync_status: str | None
+    last_sync_error: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -65,6 +64,6 @@ class IntegrationSyncRunOut(BaseModel):
     trigger_source: str
     status: str
     stats: dict[str, Any]
-    error: Optional[str]
+    error: str | None
     started_at: datetime
-    finished_at: Optional[datetime]
+    finished_at: datetime | None

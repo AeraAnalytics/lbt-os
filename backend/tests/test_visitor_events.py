@@ -1,10 +1,9 @@
 import unittest
 from unittest.mock import patch
 
-from fastapi.testclient import TestClient
-
 from app.main import app
 from app.services.visitor_events import sanitize_metadata
+from fastapi.testclient import TestClient
 
 
 class InsertResult:
